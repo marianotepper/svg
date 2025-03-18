@@ -47,7 +47,7 @@ def build_neighborhood(X: np.ndarray, idx: int, kernel_fun,
     while candidates:
         i = candidates[-1]
         candidates.pop()
-        neighbors.append(i)
+        neighbors.append(int(i))
 
         candidates_temp = list(candidates)
         for n in candidates:
