@@ -14,8 +14,6 @@ def plot_graph(graph, X, node_size=5):
         edge_x, edge_y = add_edge(start, end, edge_x, edge_y, 1, 'end', .02,
                                  30, node_size)
 
-    print(edge_x)
-
     edge_trace = go.Scatter(
         x=edge_x, y=edge_y,
         line=dict(width=0.5, color='#888'),
