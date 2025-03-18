@@ -29,12 +29,13 @@ class SearchGraph(ABC):
 
         not_done = True
         while not_done:
-            neighs = self.graph.adj[current_node]
+            neighs = [e[1] for e in self.graph.edges(current_node)]
             K = self.kernel_fun(query, self.X[neighs])
-            best_neigh = np.argmax(K)
+            best_neigh = int(np.argmax(K))
 
             if K[best_neigh] > K_current_node:
                 current_node = neighs[best_neigh]
+                K_current_node = K[best_neigh]
             else:
                 not_done = False
 
