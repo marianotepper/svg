@@ -3,7 +3,7 @@ from typing import Optional, Callable
 import networkx as nx
 import numpy as np
 
-from svg.search import SearchGraph
+from index.search import SearchGraph
 
 
 class MRNG(SearchGraph):
