@@ -55,7 +55,6 @@ def plot_lunes(graph, X, idx, idx_additional_lunes: list[int] = []):
     return fig
 
 
-
 def write_image(fig, filename, scale=None):
     fig.write_image(filename, scale=scale)
     time.sleep(2)
