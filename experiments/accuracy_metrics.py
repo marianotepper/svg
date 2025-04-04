@@ -1,12 +1,12 @@
 import numpy as np
 
 
-def compute_recall(gt, indices, k=10, at=10):
-    assert k <= at
+def compute_recall(gt, indices, k_gt=10, at=10):
+    assert k_gt <= at
     assert len(gt) == len(indices)
-    recall = [len(np.intersect1d(gt[i, :k], indices[i, :at])) / k
+    recall = [len(np.intersect1d(gt[i, :k_gt], indices[i, :at]))
               for i in range(len(gt))]
-    return np.mean(recall)
+    return np.mean(recall) / k_gt
 
 
 def _apk(gt, predicted, k=10):
