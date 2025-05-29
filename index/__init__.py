@@ -1,2 +1,3 @@
-from .mrng import MRNG
-from .kernels import radial_basis_function
+from .kernels import Kernel
+from .mrng import MRNG, build_neighborhood as build_neighborhood_mrng
+from .svg import SVG
