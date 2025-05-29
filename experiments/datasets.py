@@ -58,6 +58,14 @@ def select_dataset(dirname, name):
     X_query = vecs_io.fvecs_read(query_filename)
     gt = vecs_io.ivecs_read(gt_filename)
 
+    _, unique_indices, unique_inverse = np.unique(X_db, axis=0, return_index=True, return_inverse=True)
+    unique_indices = np.setdiff1d(unique_indices, np.where(np.linalg.norm(X_db, axis=1) <= 1e-5)[0])
+    idx_sort = np.argsort(unique_indices)
+    unique_indices = unique_indices[idx_sort]
+    unique_inverse[unique_indices] = np.arange(len(unique_indices))
+    X_db = X_db[unique_indices]
+    gt = unique_inverse[gt]
+
     nonzero_mask = np.linalg.norm(X_query, axis=1) > 0
     X_query = X_query[nonzero_mask]
     gt = gt[nonzero_mask]
