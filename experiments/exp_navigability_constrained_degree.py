@@ -83,8 +83,10 @@ def main():
                         print(matches, matches / n_searches)
 
                         graph_name = index.name()
-                        if hasattr(index, 'n_candidates') and index.n_candidates is not None:
-                            graph_name += f' (C={index.n_candidates // index.max_out_degree})'
+                        if (hasattr(index, 'n_candidates')
+                                and index.n_candidates is not None):
+                            r = index.n_candidates // index.max_out_degree
+                            graph_name += f' (r={r})'
 
                         records.append(
                             dict(seed=seed,
@@ -139,7 +141,7 @@ def main():
 
     fig.update_annotations(font_size=25)
     fig.update_layout(
-        height=600,
+        height=400,
         width=1200,
         font=dict(size=25),
         boxmode="group",
