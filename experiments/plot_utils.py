@@ -5,7 +5,7 @@ from shapely.geometry import Point
 
 from plotly_dirgraph import add_edge
 
-def plot_graph(graph, X, node_size=5):
+def plot_graph(graph, X, node_size=5, node_color='black'):
     edge_x = []
     edge_y = []
     for edge in graph.edges():
@@ -23,7 +23,7 @@ def plot_graph(graph, X, node_size=5):
 
     node_trace = go.Scatter(
         x=X[:, 0], y=X[:, 1],
-        marker=dict(size=8),
+        marker=dict(size=8, color=node_color),
         mode='markers',
         hoverinfo='text',
     )
