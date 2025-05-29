@@ -14,7 +14,10 @@ class SVG(SearchGraph):
         super().__init__(kernel, max_out_degree)
 
     def name(self):
-        return 'SVG'
+        if self.max_out_degree is None:
+            return 'SVG'
+        else:
+            return 'SVG-L0'
 
     def fit(self, X: np.ndarray):
         self._check(X)
