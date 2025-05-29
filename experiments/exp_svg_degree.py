@@ -99,6 +99,8 @@ def main():
 
     fig = go.Figure(data=traces)
     fig.update_layout(
+        height=400,
+        width=800,
         font=dict(size=30),
         margin={"l": 0, "r": 0, "t": 0, "b": 0},
     )
