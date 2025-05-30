@@ -139,6 +139,10 @@ def main():
                 row=1, col=i_overquery + 1
             )
 
+    fig.update_yaxes(title=dict(text='recall@1', standoff=30), row=1, col=1)
+    fig.update_xaxes(title='Dimensions', row=1, col=1)
+    fig.update_xaxes(title='Dimensions', row=1, col=2)
+
     fig.update_annotations(font_size=25)
     fig.update_layout(
         height=400,

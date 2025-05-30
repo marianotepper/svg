@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import os
 import pandas as pd
@@ -86,8 +88,10 @@ def main():
 
     cols = len(configs) // 2
     fig = make_subplots(rows=2, cols=cols,
-                        subplot_titles=[f'd={config['dims']}'
-                                        for config in configs])
+                        subplot_titles=[f'{config['dims']} dimensions'
+                                        for config in configs],
+                        shared_yaxes=True,
+                        vertical_spacing=0.4)
 
     for i_config, config in enumerate(configs):
         df_temp = df[df['dims'] == config['dims']]
@@ -116,6 +120,12 @@ def main():
                            mode='markers+lines',),
                 row=i_config // cols + 1, col=i_config % cols + 1
             )
+
+    # fig.update_yaxes(title=dict(text='Average degree', standoff=30))
+    fig.update_yaxes(title=dict(text='recall@1', standoff=30), row=1, col=1)
+    fig.update_yaxes(title=dict(text='recall@1', standoff=30), row=2, col=1)
+    for row, col in itertools.product(range(cols), range(cols)):
+        fig.update_xaxes(title=u'\u03C3', row=row + 1, col=col + 1)
 
     fig.update_annotations(font_size=25)
     fig.update_layout(

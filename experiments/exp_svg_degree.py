@@ -97,10 +97,15 @@ def main():
                        mode='markers+lines',)
         )
 
+
     fig = go.Figure(data=traces)
+
+    fig.update_yaxes(title=dict(text='Average degree', standoff=30))
+    fig.update_xaxes(title='Dimensions')
+
     fig.update_layout(
         height=400,
-        width=800,
+        width=900,
         font=dict(size=30),
         margin={"l": 0, "r": 0, "t": 0, "b": 0},
     )
