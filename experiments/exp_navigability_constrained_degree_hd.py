@@ -208,11 +208,11 @@ def plot_examples(dataset_names, max_out_degrees):
 
 def main():
     dirname = sys.argv[1]
-    datasets = ['colbert-1M', 'cohere-english-v3-100k', 'openai-v3-small-100k']
+    dataset_names = ['colbert-1M', 'cohere-english-v3-100k', 'openai-v3-small-100k']
     max_out_degrees = [8, 16, 32]
 
     for max_degree in max_out_degrees:
-        for dataset_name in datasets:
+        for dataset_name in dataset_names:
             run_example(dirname, dataset_name, max_degree)
 
     plot_examples(datasets, max_out_degrees)
