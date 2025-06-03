@@ -213,7 +213,7 @@ def main():
 
     for max_degree in max_out_degrees:
         for dataset_name in datasets:
-            run_example(dirname, 'dataset_name-1M', max_degree)
+            run_example(dirname, dataset_name, max_degree)
 
     plot_examples(datasets, max_out_degrees)
 
