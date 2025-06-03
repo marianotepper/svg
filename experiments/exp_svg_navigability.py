@@ -90,7 +90,7 @@ def main():
     fig = make_subplots(rows=2, cols=cols,
                         subplot_titles=[f'{config['dims']} dimensions'
                                         for config in configs],
-                        shared_yaxes=True,
+                        # shared_yaxes=True,
                         vertical_spacing=0.4)
 
     for i_config, config in enumerate(configs):
