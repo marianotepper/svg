@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import os
 import pandas as pd
@@ -12,18 +14,17 @@ import datasets
 from index import MRNG, SVG, Kernel
 from plot_utils import write_image
 
+pio.templates.default = "plotly_white"
+pio.kaleido.scope.mathjax = None
 
-def run_example(dirname, dataset_name):
+
+def run_example(dirname, dataset_name, max_out_degree):
     dataset = datasets.select_dataset(dirname, dataset_name)
-    X = dataset.X_db[:1_000]
-
-    pio.templates.default = "plotly_white"
-    pio.kaleido.scope.mathjax = None
+    X = dataset.X_db[:10_000]
 
     sigmas = np.arange(0.5, 4, 0.25)
-    max_out_degree = 16
 
-    filename = f'exp_navigability_constrained_degree_{dataset_name}.pickle'
+    filename = f'exp_navigability_degree{max_out_degree}_{dataset_name}.pickle'
 
     if os.path.exists(filename):
         df = pd.read_pickle(filename)
@@ -86,15 +87,15 @@ def run_example(dirname, dataset_name):
                     )
                     print(records[-1])
 
-            df = pd.DataFrame.from_records(records)
-            df.to_pickle(filename)
+        df = pd.DataFrame.from_records(records)
+        df.to_pickle(filename)
 
 
     unique_graph_names = df['graph'].unique()
     palette = plotly.colors.qualitative.Set1[:len(unique_graph_names)][::-1]
 
     fig = make_subplots(
-        rows=1, cols=2,
+        rows=2, cols=1,
         subplot_titles=['Backtracking=1', 'Backtracking=2'],
         shared_yaxes=True,
     )
@@ -116,32 +117,105 @@ def run_example(dirname, dataset_name):
                            line=dict(color=color, width=3),
                            showlegend=i_overquery == 0,
                            mode=mode,),
-                row=1, col=i_overquery + 1
+                row=i_overquery + 1, col=1
             )
 
     fig.update_yaxes(title='recall@1', row=1, col=1)
     fig.update_xaxes(title=u'\u03C3', row=1, col=1)
-    fig.update_xaxes(title=u'\u03C3', row=1, col=2)
+    fig.update_xaxes(title=u'\u03C3', row=2, col=1)
 
     fig.update_annotations(font_size=25)
     fig.update_layout(
-        height=400,
-        width=1200,
+        height=600,
+        width=600,
         font=dict(size=25),
         boxmode="group",
         margin={"l": 0, "r": 0, "t": 30, "b": 0},
     )
     fig.show()
     write_image(fig,
-                f'exp_navigability_constrained_degree_{dataset_name}.png',
+                f'exp_navigability_degree{max_out_degree}_{dataset_name}.png',
                 scale=3)
+
+
+def plot_examples(dataset_names, max_out_degrees):
+    n_datasets = len(dataset_names)
+    n_max_out_degrees = len(max_out_degrees)
+
+    for i_overquery, overquery in enumerate([1, 2]):
+        fig = make_subplots(
+            rows=n_datasets, cols=n_max_out_degrees,
+            subplot_titles=dataset_names,
+            vertical_spacing=0.1
+        )
+
+        for i_dataset, i_max_degree in itertools.product(
+                range(n_datasets), range(n_max_out_degrees)
+        ):
+            filename = (f'exp_navigability'
+                        f'_degree{max_out_degrees[i_max_degree]}'
+                        f'_{dataset_names[i_dataset]}.pickle')
+            df = pd.read_pickle(filename)
+
+            unique_graph_names = df['graph'].unique()
+            palette = plotly.colors.qualitative.Set1
+            palette = palette[:len(unique_graph_names)][::-1]
+
+            for graph, color in zip(unique_graph_names, palette):
+                df_temp = df[(df['graph'] == graph)
+                             & (df['overquery'] == overquery)]
+
+                if 'SVG' in graph:
+                    mode = 'markers+lines'
+                else:
+                    mode = 'lines'
+
+                fig.add_trace(
+                    go.Scatter(name=graph,
+                               x=df_temp['sigma'],
+                               y=df_temp['navigable_ratio'],
+                               line=dict(color=color, width=3),
+                               showlegend=i_dataset == 0 and i_max_degree == 0,
+                               mode=mode, ),
+                    row=i_max_degree + 1, col=i_dataset + 1
+                )
+
+        for i_dataset, i_max_degree in itertools.product(
+                range(n_datasets),
+                range(n_max_out_degrees)
+        ):
+            fig.update_yaxes(title='recall@1',
+                             row=i_dataset + 1,
+                             col=i_max_degree + 1)
+            fig.update_xaxes(title=u'\u03C3',
+                             row=i_dataset + 1,
+                             col=i_max_degree + 1)
+
+        fig.update_annotations(font_size=20)
+        fig.update_layout(
+            height=800,
+            width=1600,
+            font=dict(size=20),
+            boxmode="group",
+            margin={"l": 0, "r": 0, "t": 30, "b": 0},
+        )
+
+        fig.show()
+        write_image(fig,
+                    f'exp_navigability_datasets_backtracking{overquery}.png',
+                    scale=3)
 
 
 def main():
     dirname = sys.argv[1]
-    run_example(dirname, 'colbert-1M')
-    run_example(dirname, 'cohere-english-v3-100k')
+    datasets = ['colbert-1M', 'cohere-english-v3-100k', 'openai-v3-small-100k']
+    max_out_degrees = [8, 16, 32]
 
+    for max_degree in max_out_degrees:
+        for dataset_name in datasets:
+            run_example(dirname, 'dataset_name-1M', max_degree)
+
+    plot_examples(datasets, max_out_degrees)
 
 if __name__ == '__main__':
     main()
