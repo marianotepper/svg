@@ -18,12 +18,16 @@ def kernel_nnls(K: np.ndarray, zero_dim: int):
         raise ValueError("Only 0 <= zero_dim < A.shape[0] allowed")
 
     n = len(K)
-    fun = lambda x: 0.5 * (x @ K @ x) - K[zero_dim].T @ x
-    bounds = [(0, None)] * n
-    bounds[zero_dim] = (0, 0)
-    x0 = np.ones(n) / n
-    res = minimize(fun, x0, bounds=bounds, tol=1e-50)
-    return res.x
+    idx = list(range(n))
+    idx.remove(zero_dim)
+
+    A = K[idx, :][:, idx]
+    b = K[zero_dim, :][idx]
+    x_temp = qp(A, b)
+
+    x = np.zeros((n,))
+    x[idx] = x_temp
+    return x
 
 
 def qp(A: np.ndarray, b: np.ndarray):
