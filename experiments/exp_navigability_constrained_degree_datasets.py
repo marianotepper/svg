@@ -215,7 +215,7 @@ def main():
         for dataset_name in dataset_names:
             run_example(dirname, dataset_name, max_degree)
 
-    plot_examples(datasets, max_out_degrees)
+    plot_examples(dataset_names, max_out_degrees)
 
 if __name__ == '__main__':
     main()
