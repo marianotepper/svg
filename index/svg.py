@@ -12,6 +12,7 @@ class SVG(SearchGraph):
     def __init__(self, kernel: Kernel,
                  max_out_degree: Optional[int] = None):
         super().__init__(kernel, max_out_degree)
+        self.stats_s_sum = None
 
     def name(self):
         if self.max_out_degree is None:
@@ -34,8 +35,10 @@ class SVG(SearchGraph):
                 range(len(X))
             )
 
-        for sublist in all_neighbors:
+        self.stats_s_sum = []
+        for sublist, s in all_neighbors:
             self.graph.add_edges_from(sublist)
+            self.stats_s_sum.append(s.sum())
 
         self.entrypoint_from_centroid()
 
@@ -52,7 +55,7 @@ class NeighborhoodBuilder:
 
 def build_neighborhood(K: np.ndarray, idx: int,
                        max_out_degree: Optional[int] = None,
-                       return_edges: bool = False) -> Union[list[int], list[tuple]]:
+                       return_edges: bool = False) -> tuple[list[int], np.ndarray]:
     if max_out_degree is None:
         s = kernel_nnls(K, zero_dim=idx)
     else:
@@ -68,4 +71,4 @@ def build_neighborhood(K: np.ndarray, idx: int,
     if return_edges:
         neighbors = [(idx, n) for n in neighbors]
 
-    return neighbors
+    return neighbors, s
