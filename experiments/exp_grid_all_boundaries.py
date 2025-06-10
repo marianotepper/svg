@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 import plotly.io as pio
 import plotly.subplots
 from scipy import ndimage as ndi
-from skimage.color import label2rgb
 from skimage.feature import peak_local_max
 from skimage.segmentation import watershed, find_boundaries
 
@@ -27,14 +26,7 @@ def topographic_watershed(landscape_max):
     markers, _ = ndi.label(mask)
     labels = watershed(-image, markers=markers, connectivity=2)
 
-    # rng = np.random.default_rng(0)
-    # unique_labels = np.unique(labels)
-    # shuffled_labels = rng.permuted(unique_labels) - 1
-    # labels_shuffled = labels.copy()
-    # for i, lab in enumerate(unique_labels):
-    #     labels_shuffled[labels == lab] = shuffled_labels[i]
-
-    return labels#_shuffled
+    return labels
 
 
 def plot_all_boundaries(step_x=6, step_y=6, n_grid=100):
@@ -130,16 +122,6 @@ def plot_all_boundaries(step_x=6, step_y=6, n_grid=100):
 
     labels = topographic_watershed(landscape_max)
     fig.add_trace(
-        # go.Contour(
-        #     x=coord_eval[0],
-        #     y=coord_eval[1],
-        #     z=labels,
-        #     ncontours=2,
-        #     contours=dict(showlines=False),
-        #     colorscale=plotly.colors.diverging.RdBu_r[:2],
-        #     showscale=False,
-        #     showlegend=False,
-        # ),
         go.Heatmap(
             x=np.interp(np.arange((len(coord_eval[0])), step=0.5),
                         np.arange((len(coord_eval[0]))),
