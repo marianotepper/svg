@@ -15,6 +15,7 @@ def plot_graph(graph, X, node_size=5, node_color='black'):
                                  30, node_size)
 
     edge_trace = go.Scatter(
+        name='Edges',
         x=edge_x, y=edge_y,
         line=dict(width=0.5, color='#888'),
         hoverinfo='none',
@@ -22,6 +23,7 @@ def plot_graph(graph, X, node_size=5, node_color='black'):
     )
 
     node_trace = go.Scatter(
+        name='Nodes',
         x=X[:, 0], y=X[:, 1],
         marker=dict(size=8, color=node_color),
         mode='markers',
