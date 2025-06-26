@@ -8,6 +8,6 @@ Provides a reference implementation of the Support Vector Graph (SVG)
 >
 > 2025
 > 
-> ARXIV LINK
+> https://arxiv.org/abs/2506.20584
 
 It also allows to reproduce all plots in the paper. 
