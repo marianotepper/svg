@@ -21,7 +21,6 @@ def svg_cartoon_no_max_degree():
     res = np.meshgrid(coord0, coord1)
     X = np.stack(res).T.reshape(-1, 2).astype(float)
     print(X.shape)
-    X[idx, 0] = 2
 
     kernel = Kernel(sigma)
 
@@ -32,7 +31,8 @@ def svg_cartoon_no_max_degree():
     s[s < 1e-9] = 0
     s /= s.sum()
 
-    print(s, s.sum())
+    # print(s, s.sum())
+    # print(np.nonzero(s)[0])
 
     points_trace = go.Scatter(
         x=X[:, 0], y=X[:, 1],
