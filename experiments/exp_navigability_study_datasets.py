@@ -23,8 +23,6 @@ def run_example(dirname, dataset_name):
     filename = f'exp_quasi_navigability_study_{dataset_name}.pickle'
 
     if not os.path.exists(filename):
-
-
         kernel = Kernel(sigma=sigma, similarity='euclidean')
 
         index = SVG(kernel, max_out_degree=None)
