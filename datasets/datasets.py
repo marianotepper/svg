@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import os
@@ -9,40 +9,40 @@ import datasets.vecs_io as vecs_io
 
 @dataclass
 class Dataset:
-    dirname: str
-    subdirname: str
-    db_filename: str
-    query_filename: str
-    gt_filename: str
-    X_db: np.ndarray = field(init=False)
-    X_query: np.ndarray = field(init=False)
-    gt: np.ndarray = field(init=False)
+    name: str
+    X_db: np.ndarray
+    X_query: np.ndarray
+    gt: np.ndarray
 
-    def __post_init__(self):
-        if not os.path.exists(f'{self.dirname}/{self.subdirname}'):
-            os.makedirs(f'{self.dirname}/{self.subdirname}')
 
-        relative_filename =  f'{self.subdirname}/{self.db_filename}.fvec'
-        filename = f'{self.dirname}/{relative_filename}'
-        if not os.path.exists(filename):
-            downloader.get_file(relative_filename, filename)
-        self.X_db = vecs_io.fvecs_read(filename)
+def _create_dataset(name: str, dirname: str, subdirname: str, db_filename: str,
+                    query_filename: str, gt_filename: str) -> Dataset:
+    if not os.path.exists(f'{dirname}/{subdirname}'):
+        os.makedirs(f'{dirname}/{subdirname}')
 
-        relative_filename = f'{self.subdirname}/{self.query_filename}.fvec'
-        filename = f'{self.dirname}/{relative_filename}'
-        if not os.path.exists(filename):
-            downloader.get_file(relative_filename, filename)
-        self.X_query = vecs_io.fvecs_read(filename)
+    relative_filename = f'{subdirname}/{db_filename}.fvec'
+    filename = f'{dirname}/{relative_filename}'
+    if not os.path.exists(filename):
+        downloader.get_file(relative_filename, filename)
+    X_db = vecs_io.fvecs_read(filename)
 
-        relative_filename = f'{self.subdirname}/{self.gt_filename}.ivec'
-        filename = f'{self.dirname}/{relative_filename}'
-        if not os.path.exists(filename):
-            downloader.get_file(relative_filename, filename)
-        self.gt = vecs_io.ivecs_read(filename)
+    relative_filename = f'{subdirname}/{query_filename}.fvec'
+    filename = f'{dirname}/{relative_filename}'
+    if not os.path.exists(filename):
+        downloader.get_file(relative_filename, filename)
+    X_query = vecs_io.fvecs_read(filename)
 
-        nonzero_mask = np.linalg.norm(self.X_query, axis=1) > 0
-        self.X_query = self.X_query[nonzero_mask]
-        self.gt = self.gt[nonzero_mask]
+    relative_filename = f'{subdirname}/{gt_filename}.ivec'
+    filename = f'{dirname}/{relative_filename}'
+    if not os.path.exists(filename):
+        downloader.get_file(relative_filename, filename)
+    gt = vecs_io.ivecs_read(filename)
+
+    nonzero_mask = np.linalg.norm(X_query, axis=1) > 0
+    X_query = X_query[nonzero_mask]
+    gt = gt[nonzero_mask]
+
+    return Dataset(name, X_db, X_query, gt)
 
 
 def select_dataset(name, dirname='./wikipedia_squad'):
@@ -79,7 +79,8 @@ def select_dataset(name, dirname='./wikipedia_squad'):
     else:
         raise ValueError(f'Unknown dataset: {name}')
 
-    return Dataset(
+    return _create_dataset(
+        name,
         dirname,
         subdir,
         db_filename,
