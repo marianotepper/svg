@@ -207,7 +207,11 @@ def plot_examples(dataset_names, max_out_degrees):
 
 
 def main():
-    dirname = sys.argv[1]
+    if len(sys.argv) != 2:
+        dirname = './wikipedia_squad'
+    else:
+        dirname = sys.argv[1]
+
     dataset_names = ['colbert-1M', 'cohere-english-v3-100k', 'openai-v3-small-100k']
     max_out_degrees = [8, 16, 32]
 

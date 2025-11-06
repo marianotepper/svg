@@ -75,7 +75,11 @@ def plot_examples(dataset_names):
 
 
 def main():
-    dirname = sys.argv[1]
+    if len(sys.argv) != 2:
+        dirname = './wikipedia_squad'
+    else:
+        dirname = sys.argv[1]
+
     dataset_names = ['colbert-1M', 'cohere-english-v3-100k', 'openai-v3-small-100k']
 
     for dataset_name in dataset_names:
