@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 import os
+import tarfile
+from urllib.request import urlretrieve
 
 import datasets.downloader as downloader
 import datasets.vecs_io as vecs_io
@@ -45,7 +47,7 @@ def _create_dataset(name: str, dirname: str, subdirname: str, db_filename: str,
     return Dataset(name, X_db, X_query, gt)
 
 
-def select_dataset(name, dirname='./'):
+def _select_dataset_wikipedia_squad(name, dirname='./'):
     if name == 'wikipedia_squad/ada002-100k':
         subdir = '100k'
         db_filename = 'ada_002_100000_base_vectors'
@@ -97,6 +99,66 @@ def select_dataset(name, dirname='./'):
         query_filename,
         gt_filename
     )
+
+
+def _create_dataset_from_tar(name: str, full_dirname: str,
+                             url: str, tar_filename: str, db_filename: str,
+                             query_filename: str, gt_filename: str) -> Dataset:
+    if not os.path.exists(full_dirname):
+        os.makedirs(full_dirname)
+
+    tar_filename = f'{full_dirname}/{tar_filename}'
+    if not os.path.exists(tar_filename):
+        try:
+            urlretrieve(url, tar_filename)
+            print(f"File '{tar_filename}' downloaded successfully.")
+        except Exception as e:
+            print(f"Error downloading file: {e}")
+
+    with tarfile.open(tar_filename, 'r:gz') as tar:
+        for member in tar:
+            if member.isdir():
+                continue
+            fname = member.name.rsplit('/', 1)[1]
+            tar.makefile(member, f'{full_dirname}/{fname}')
+
+    X_db = vecs_io.fvecs_read(f'{full_dirname}/{db_filename}.fvecs')
+    X_query = vecs_io.fvecs_read(f'{full_dirname}/{query_filename}.fvecs')
+    gt = vecs_io.ivecs_read(f'{full_dirname}/{gt_filename}.ivecs')
+
+    return Dataset(name, X_db, X_query, gt)
+
+
+def _select_dataset_tar(name, dirname='./'):
+    if name == 'siftsmall':
+        subdir = 'siftsmall'
+        tar_filename = 'siftsmall_base'
+        url = 'ftp://ftp.irisa.fr/local/texmex/corpus/siftsmall.tar.gz'
+        db_filename = 'siftsmall_base'
+        query_filename = 'siftsmall_query'
+        gt_filename = 'siftsmall_groundtruth'
+    else:
+        raise ValueError(f'Unknown dataset: {name}')
+
+    return _create_dataset_from_tar(
+        name,
+        f'{dirname}/{subdir}',
+        url,
+        tar_filename,
+        db_filename,
+        query_filename,
+        gt_filename
+    )
+
+
+def select_dataset(name, dirname='./'):
+    for loader_function in [_select_dataset_wikipedia_squad,
+                            _select_dataset_tar]:
+        try:
+            return loader_function(name, dirname=dirname)
+        except ValueError as e:
+            pass
+
 
 if __name__ == '__main__':
     dataset = select_dataset('ada002-100k')
