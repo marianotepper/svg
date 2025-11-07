@@ -48,8 +48,8 @@ def _create_dataset(name: str, dirname: str, subdirname: str, db_filename: str,
 
 
 def _select_dataset_wikipedia_squad(name, dirname='./'):
-    if name == 'wikipedia_squad/ada002-100k':
-        subdir = '100k'
+    if name == 'ada002-100k':
+        subdir = 'wikipedia_squad/100k'
         db_filename = 'ada_002_100000_base_vectors'
         query_filename = 'ada_002_100000_query_vectors_10000'
         gt_filename = 'ada_002_100000_indices_query_10000'
