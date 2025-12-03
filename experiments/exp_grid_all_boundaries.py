@@ -13,7 +13,7 @@ from index.optimization import kernel_nnls
 from plot_utils import write_image
 
 pio.templates.default = "plotly_white"
-pio.kaleido.scope.mathjax = None
+
 
 def topographic_watershed(landscape_max):
     image = landscape_max
@@ -61,7 +61,7 @@ def plot_all_boundaries(step_x=6, step_y=6, n_grid=100):
     landscape_max = None
 
     for idx in range(len(X)):
-        s = kernel_nnls(K, zero_dim=idx)
+        s = kernel_nnls(K, zero_dim=idx, solver='scipy')
         s[s < 1e-6] = 0
 
         K1 = kernel.build_kernel2(X[idx], X_eval)
