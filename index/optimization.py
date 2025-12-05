@@ -62,7 +62,8 @@ def qp(A: np.ndarray, b: np.ndarray):
     return res.x
 
 
-def qp_multiplicative(A: np.ndarray, b: np.ndarray):
+def qp_multiplicative(A: np.ndarray, b: np.ndarray, n_iterations: int = 1_000,
+                      relative_tol: float = 1e-6):
     """
     Solves the convex problem:
         min_{x} 0.5 x.T @ A @ x - b.T @ x
@@ -71,11 +72,13 @@ def qp_multiplicative(A: np.ndarray, b: np.ndarray):
     :param A: square ndarray representing a positive definite matrix with
               nonnegative entries
     :param b: one-dimensional ndarray
+    :param n_iterations: maximum number of multiplicative updates
+    :param relative_tol: relative tolerance for convergence
     :return: the solution x
     """
     n = len(A)
     x = np.ones(n) / n
-    for it in range(1000):
+    for it in range(n_iterations):
         gamma = b / (A @ x)
         x_new = x * gamma
 
@@ -83,7 +86,7 @@ def qp_multiplicative(A: np.ndarray, b: np.ndarray):
         if factor > 1:
             x_new /= factor ** 0.5
 
-        if np.linalg.norm(x_new - x) / np.linalg.norm(x) < 1e-6:
+        if np.linalg.norm(x_new - x) / np.linalg.norm(x) < relative_tol:
             return x_new
         else:
             x = x_new
