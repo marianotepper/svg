@@ -8,7 +8,6 @@ from index.optimization import kernel_nnls, kernel_nnls_l0
 from plot_utils import write_image
 
 pio.templates.default = "plotly_white"
-# pio.kaleido.scope.mathjax = None
 
 
 def generate_spiral(n_points, n_turns):
@@ -48,13 +47,18 @@ def generate_edge_traces(X, idx, neighbors, name, color, opacity, width, dash):
 
 
 def main():
+    # In order to run this experiment correctly, we need a highly accurate
+    # solution to the optimization problem.
+    # For this, in index.optimization.qp_multiplicative,
+    # we set n_iterations=100_000 and relative_tol=1e-6 manually.
+
     X = generate_spiral(30, 1)
     X = np.vstack((np.zeros((1, 2)), X))
     idx = 0
 
-    kernel = Kernel(2)
+    kernel = Kernel(1.5)
 
-    mrng_neighbors = build_neighborhood_mrng(X, idx, kernel)
+    mrng_neighbors = build_neighborhood_mrng(X, idx)
     mrng_edge_traces = generate_edge_traces(X, idx, mrng_neighbors,
                                             'MRNG', '#a6cee3',
                                             1, 7, 'solid')
@@ -64,15 +68,13 @@ def main():
 
     K = kernel.build_kernel(X)
 
-    s = kernel_nnls(K, zero_dim=idx)
-    s[s < 1e-6] = 0
+    s = kernel_nnls(K, zero_dim=idx, solver='multiplicative')
+    s[s < s.max() * 1e-3] = 0
     svg_neighbors = [i for i in np.argsort(s)[::-1] if s[i] > 0]
     svg_edge_traces = generate_edge_traces(X, 0, svg_neighbors, 'SVG',
                                            '#b2df8a', 1, 7, 'solid')
 
     s = kernel_nnls_l0(K, zero_dim=idx, nonzeros=3)
-    s[s < 1e-6] = 0
-    print(s)
     svg_neighbors = [i for i in np.argsort(s)[::-1] if s[i] > 0]
     svg_trunc_edge_traces = generate_edge_traces(X, 0, svg_neighbors,
                                                  'SVG-L0', '#33a02c',
