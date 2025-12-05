@@ -12,7 +12,7 @@ from index.optimization import kernel_nnls
 from plot_utils import write_image
 
 pio.templates.default = "plotly_white"
-pio.kaleido.scope.mathjax = None
+
 
 def subplot_voronoi_cartoon(fig, subplot: int, even_multiplier: float):
     coords = np.arange(3) - 1
@@ -59,8 +59,8 @@ def subplot_voronoi_cartoon(fig, subplot: int, even_multiplier: float):
     kernel = Kernel(1.5)
     K = kernel.build_kernel(X)
     s = kernel_nnls(K, zero_dim=idx)
-    s[s < 1e-9] = 0
-    s /= s.sum()
+    s[s < 1e-4] = 0
+    print(s)
 
     for ii, k in enumerate(np.nonzero(s)[0]):
         fig.add_trace(
