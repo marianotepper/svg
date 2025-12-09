@@ -13,7 +13,6 @@ from plot_utils import write_image
 
 def main():
     pio.templates.default = "plotly_white"
-    pio.kaleido.scope.mathjax = None
 
     configs = [
         dict(dims=2, sigmas=[0.1]),#, 0.2, 0.3, 0.4, 0.5]),
