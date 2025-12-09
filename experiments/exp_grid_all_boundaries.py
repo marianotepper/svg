@@ -20,7 +20,7 @@ def topographic_watershed(landscape_max):
     image = (image - image.min()) / (image.max() - image.min())
     image = np.floor(image * 255).astype(int)
 
-    coords = peak_local_max(image, footprint=np.ones((3, 3)), min_distance=5)
+    coords = peak_local_max(image, footprint=np.ones((7, 7)), min_distance=5)
     mask = np.zeros(image.shape, dtype=bool)
     mask[tuple(coords.T)] = True
     markers, _ = ndi.label(mask)
@@ -30,12 +30,12 @@ def topographic_watershed(landscape_max):
 
 
 def plot_all_boundaries(step_x=6, step_y=6, n_grid=100):
-    sigma = np.sqrt((step_x - 1) ** 2 + (step_y - 1) ** 2) / 2
+    sigma = np.sqrt(2) / 2
 
     coord0 = np.arange(step_x) - 0.5 * step_x + 0.5
     coord1 = np.arange(step_y) - 0.5 * step_y + 0.5
-    coord_eval = (np.linspace(coord0.min() - 3, coord0.max() + 3, num=n_grid),
-                  np.linspace(coord1.min() - 3, coord1.max() + 3, num=n_grid))
+    coord_eval = (np.linspace(coord0.min() - 1, coord0.max() + 1, num=n_grid),
+                  np.linspace(coord1.min() - 1, coord1.max() + 1, num=n_grid))
 
     mesh = np.meshgrid(coord0, coord1)
     X = np.stack(mesh).T.reshape(-1, 2).astype(float)
@@ -61,8 +61,11 @@ def plot_all_boundaries(step_x=6, step_y=6, n_grid=100):
     landscape_max = None
 
     for idx in range(len(X)):
-        s = kernel_nnls(K, zero_dim=idx, solver='scipy')
+        s = kernel_nnls(K, zero_dim=idx, solver='multiplicative')
         s[s < 1e-6] = 0
+        print(idx, s.sum(), np.nonzero(s))
+        # print(idx, s.sum(), s, np.nonzero(s))
+
 
         K1 = kernel.build_kernel2(X[idx], X_eval)
         K2 = kernel.build_kernel2(X[s > 0], X_eval)
