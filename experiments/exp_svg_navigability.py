@@ -14,12 +14,11 @@ from plot_utils import write_image
 
 def main():
     pio.templates.default = "plotly_white"
-    pio.kaleido.scope.mathjax = None
 
     configs = [
-        dict(dims=2, sigmas=[0.1, 0.2, 0.3, 0.4, 0.5]),
+        dict(dims=2, sigmas=[0.2, 0.3, 0.4, 0.5, 0.6]),
         dict(dims=5, sigmas=[0.4, 0.5, 0.6, 0.7, 0.8]),
-        dict(dims=10, sigmas=[0.70, 0.75, 0.80, 0.85, 0.90]),
+        dict(dims=10, sigmas=[0.70, 0.80, 0.90, 1, 1.1]),
         dict(dims=20, sigmas=[1.0, 1.25, 1.5, 1.75, 2.0]),
         dict(dims=50, sigmas=[2.0, 2.5, 3.0, 3.5, 4.0]),
         dict(dims=100, sigmas=[3.0, 4.0, 5.0, 6.0, 7.0]),
@@ -36,7 +35,7 @@ def main():
             for seed in range(10):
                 rng = np.random.default_rng(seed)
 
-                X = rng.random(size=(100, config['dims']))
+                X = rng.random(size=(500, config['dims']))
 
                 for sigma in config['sigmas']:
                     kernel = Kernel(sigma=sigma, similarity='euclidean')
@@ -52,36 +51,34 @@ def main():
 
                     tic = timeit.default_timer()
 
-                    for overquery in [1, 2]:
-                        n_searches = 0
-                        matches = 0
+                    n_searches = 0
+                    matches = 0
 
-                        for entrypoint in range(len(X)):
-                            for i, query in enumerate(X):
-                                if i== entrypoint:
-                                    continue
+                    for entrypoint in range(len(X)):
+                        for i, query in enumerate(X):
+                            if i== entrypoint:
+                                continue
 
-                                search_neighs = index.search(query, k=1,
-                                                             entrypoint=entrypoint,
-                                                             overquery=overquery)
-                                nneighs = [sn.id for sn in search_neighs]
-                                matches += i == nneighs[0]
-                                n_searches += 1
-                                # if i != nneighs[0]:
-                                #     print(i, nneighs)
+                            search_neighs = index.search(query, k=1,
+                                                         entrypoint=entrypoint,
+                                                         overquery=1)
+                            nneighs = [sn.id for sn in search_neighs]
+                            matches += i == nneighs[0]
+                            n_searches += 1
+                            # if i != nneighs[0]:
+                            #     print(i, nneighs)
 
-                        toc = timeit.default_timer()
-                        print(f'searched in {toc - tic} seconds')
-                        print(matches, matches / n_searches)
+                    toc = timeit.default_timer()
+                    print(f'searched in {toc - tic} seconds')
+                    print(matches, matches / n_searches)
 
-                        records.append(
-                            dict(seed=seed,
-                                 sigma=sigma,
-                                 overquery=overquery,
-                                 navigable_ratio=matches / n_searches,
-                                 dims=config['dims'])
-                        )
-                        print(records[-1])
+                    records.append(
+                        dict(seed=seed,
+                             sigma=sigma,
+                             navigable_ratio=matches / n_searches,
+                             dims=config['dims'])
+                    )
+                    print(records[-1])
 
         df = pd.DataFrame.from_records(records)
         df.to_pickle(filename)
@@ -96,7 +93,7 @@ def main():
     for i_config, config in enumerate(configs):
         df_temp = df[df['dims'] == config['dims']]
 
-        groupby = ['dims', 'sigma', 'overquery']
+        groupby = ['dims', 'sigma']
         avg_df = pd.DataFrame({
             'avg_navi': df_temp.groupby(groupby)['navigable_ratio'].mean()
         }).reset_index()
@@ -104,22 +101,18 @@ def main():
             'std_navi': df_temp.groupby(groupby)['navigable_ratio'].std()
         }).reset_index()
 
-        for overquery, color in [(1, '#377eb8'), (2, '#e41a1c')]:
-            avg_df_temp = avg_df[avg_df['overquery'] == overquery]
-            std_df_temp = std_df[std_df['overquery'] == overquery]
-            fig.add_trace(
-                go.Scatter(name=overquery,
-                           x=avg_df_temp['sigma'],
-                           y=avg_df_temp['avg_navi'],
-                           error_y=dict(
-                               type='data',
-                               array=std_df_temp['std_navi'],
-                               visible=True),
-                           line=dict(color=color, width=2),
-                           showlegend=i_config == 0,
-                           mode='markers+lines',),
-                row=i_config // cols + 1, col=i_config % cols + 1
-            )
+        fig.add_trace(
+            go.Scatter(x=avg_df['sigma'],
+                       y=avg_df['avg_navi'],
+                       error_y=dict(
+                           type='data',
+                           array=std_df['std_navi'],
+                           visible=True),
+                       line=dict(width=2),
+                       showlegend=False,
+                       mode='markers+lines',),
+            row=i_config // cols + 1, col=i_config % cols + 1
+        )
 
     # fig.update_yaxes(title=dict(text='Average degree', standoff=30))
     fig.update_yaxes(title=dict(text='recall@1', standoff=30), row=1, col=1)
