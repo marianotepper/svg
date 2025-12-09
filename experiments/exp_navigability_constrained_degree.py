@@ -7,21 +7,21 @@ from plotly.subplots import make_subplots
 import plotly.io as pio
 import timeit
 
-from index import MRNG, SVG, Kernel
+from index import MRNG, SVG, Kernel, Vamana
 from plot_utils import write_image
 
 
 def main():
     pio.templates.default = "plotly_white"
-    pio.kaleido.scope.mathjax = None
 
     configs = [
-        dict(dims=2, sigma=0.2, max_out_degree=3),
-        dict(dims=5, sigma=0.6, max_out_degree=5),
-        dict(dims=10, sigma=0.90, max_out_degree=7),
-        dict(dims=20, sigma=1.5, max_out_degree=8),
-        dict(dims=50, sigma=2.5, max_out_degree=10),
+        dict(dims=5, sigma=0.5, max_out_degree=5),
+        dict(dims=10, sigma=0.8, max_out_degree=7),
+        dict(dims=20, sigma=1.3, max_out_degree=8),
+        dict(dims=50, sigma=1.9, max_out_degree=16),
     ]
+
+    # sigmas = np.arange(0.1, 1.7, step=0.1, dtype=float)
 
     filename = 'exp_navigability_constrained_degree.pickle'
 
@@ -34,23 +34,34 @@ def main():
             for seed in range(10):
                 rng = np.random.default_rng(seed)
 
-                X = rng.random(size=(100, config['dims']))
+                X = rng.random(size=(1_000, config['dims']))
 
-                kernel = Kernel(sigma=config['sigma'], similarity='euclidean')
+                max_out_degree = config['max_out_degree']
+                sigma = config['sigma']
 
-                for index in [
-                    MRNG(kernel,
-                         n_candidates=None,
-                         max_out_degree=config['max_out_degree']),
-                    MRNG(kernel,
-                         n_candidates=config['max_out_degree'] * 2,
-                         max_out_degree=config['max_out_degree']),
-                    MRNG(kernel,
-                         n_candidates=config['max_out_degree'] * 4,
-                         max_out_degree=config['max_out_degree']),
-                    SVG(kernel, max_out_degree=config['max_out_degree'])
-                ]:
+                indices = [
+                    # MRNG(n_candidates=None,
+                    #      max_out_degree=max_out_degree),
+                    # MRNG(n_candidates=max_out_degree * 2,
+                    #      max_out_degree=max_out_degree),
+                    # MRNG(n_candidates=max_out_degree * 4,
+                    #      max_out_degree=max_out_degree),
+                    Vamana(n_candidates=max_out_degree * 2,
+                           max_out_degree=max_out_degree,
+                           alpha_sequence=[1, 1.2]),
+                    Vamana(n_candidates=max_out_degree * 4,
+                           max_out_degree=max_out_degree,
+                           alpha_sequence=[1, 1.2]),
+                    SVG(Kernel(sigma=sigma, similarity='euclidean'),
+                        max_out_degree=max_out_degree)
+                ]
+                # indices.extend([
+                #     SVG(Kernel(sigma=sigma, similarity='euclidean'),
+                #         max_out_degree=max_out_degree)
+                #     for sigma in sigmas
+                # ])
 
+                for index in indices:
                     tic = timeit.default_timer()
                     index.fit(X)
                     toc = timeit.default_timer()
@@ -61,11 +72,11 @@ def main():
 
                     tic = timeit.default_timer()
 
-                    for overquery in [1, 2]:
+                    for overquery in [1, 2, 5]:
                         n_searches = 0
                         matches = 0
 
-                        for entrypoint in range(len(X)):
+                        for entrypoint in range(0, len(X), 10):
                             for i, query in enumerate(X):
                                 if i== entrypoint:
                                     continue
@@ -87,10 +98,11 @@ def main():
                                 and index.n_candidates is not None):
                             r = index.n_candidates // index.max_out_degree
                             graph_name += f' (r={r})'
+                        # if hasattr(index, 'kernel'):
+                        #     graph_name += f' (sigma={index.kernel.sigma:.2f})'
 
                         records.append(
                             dict(seed=seed,
-                                 sigma=config['sigma'],
                                  graph=graph_name,
                                  overquery=overquery,
                                  navigable_ratio=matches / n_searches,
@@ -113,12 +125,15 @@ def main():
     unique_graph_names = df['graph'].unique()
     palette = plotly.colors.qualitative.Set1[:len(unique_graph_names)][::-1]
 
+    overqueries = df['overquery'].unique()
+
     fig = make_subplots(
-        rows=1, cols=2,
-        subplot_titles=['Backtracking=1', 'Backtracking=2'],
+        rows=1, cols=len(overqueries),
+        subplot_titles=[f'Backtracking={overquery}'
+                        for overquery in overqueries],
     )
 
-    for i_overquery, overquery in enumerate([1, 2]):
+    for i_overquery, overquery in enumerate(overqueries):
         for graph, color in zip(unique_graph_names, palette):
             avg_df_temp = avg_df[(avg_df['graph'] == graph)
                                  & (avg_df['overquery'] == overquery)]
@@ -140,13 +155,15 @@ def main():
             )
 
     fig.update_yaxes(title=dict(text='recall@1', standoff=30), row=1, col=1)
-    fig.update_xaxes(title='Dimensions', row=1, col=1)
-    fig.update_xaxes(title='Dimensions', row=1, col=2)
+    for i in range(len(overqueries)):
+        fig.update_xaxes(title='Dimensions', tickmode='array',
+                         tickvals=df['dims'].unique(),
+                         row=1, col=i+1)
 
     fig.update_annotations(font_size=25)
     fig.update_layout(
         height=400,
-        width=1200,
+        width=1800,
         font=dict(size=25),
         boxmode="group",
         margin={"l": 0, "r": 0, "t": 30, "b": 0},
