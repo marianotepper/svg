@@ -12,7 +12,7 @@ pio.kaleido.scope.mathjax = None
 
 def svg_cartoon_atention():
     idx = 12
-    sigma = 2
+    sigma = 1
 
     coord0 = np.array([-1, 0, 1])
     coord1 = np.arange(5)
