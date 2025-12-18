@@ -40,12 +40,12 @@ def main():
                 sigma = config['sigma']
 
                 indices = [
-                    # MRNG(n_candidates=None,
-                    #      max_out_degree=max_out_degree),
-                    # MRNG(n_candidates=max_out_degree * 2,
-                    #      max_out_degree=max_out_degree),
-                    # MRNG(n_candidates=max_out_degree * 4,
-                    #      max_out_degree=max_out_degree),
+                    MRNG(n_candidates=None,
+                         max_out_degree=max_out_degree),
+                    MRNG(n_candidates=max_out_degree * 2,
+                         max_out_degree=max_out_degree),
+                    MRNG(n_candidates=max_out_degree * 4,
+                         max_out_degree=max_out_degree),
                     Vamana(n_candidates=max_out_degree * 2,
                            max_out_degree=max_out_degree,
                            alpha_sequence=[1, 1.2]),
@@ -123,7 +123,15 @@ def main():
     print(avg_df)
 
     unique_graph_names = df['graph'].unique()
-    palette = plotly.colors.qualitative.Set1[:len(unique_graph_names)][::-1]
+    palette = plotly.colors.qualitative.Set1[:4][::-1]
+    line_types = [
+        dict(dash='solid', color=palette[0]),
+        dict(dash='solid', color=palette[1]),
+        dict(dash='dash', color=palette[1]),
+        dict(dash='solid', color=palette[2]),
+        dict(dash='dash', color=palette[2]),
+        dict(dash='solid', color=palette[3]),
+    ]
 
     overqueries = df['overquery'].unique()
 
@@ -134,7 +142,7 @@ def main():
     )
 
     for i_overquery, overquery in enumerate(overqueries):
-        for graph, color in zip(unique_graph_names, palette):
+        for graph, line in zip(unique_graph_names, line_types):
             avg_df_temp = avg_df[(avg_df['graph'] == graph)
                                  & (avg_df['overquery'] == overquery)]
             std_df_temp = std_df[(std_df['graph'] == graph)
@@ -148,7 +156,8 @@ def main():
                                array=std_df_temp['std_navi'],
                                thickness=3,
                                visible=True),
-                           line=dict(color=color, width=3),
+                           line=dict(color=line['color'], dash=line['dash'],
+                                     width=3),
                            showlegend=i_overquery == 0,
                            mode='lines',),
                 row=1, col=i_overquery + 1
