@@ -15,7 +15,6 @@ from index import MRNG, SVG, Kernel, Vamana
 from plot_utils import write_image
 
 pio.templates.default = "plotly_white"
-pio.kaleido.scope.mathjax = None
 
 
 def run_example(datasets_dirname, dataset_name, max_out_degree):
