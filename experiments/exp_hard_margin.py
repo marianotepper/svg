@@ -9,7 +9,7 @@ from index.optimization import kernel_nnls
 from plot_utils import write_image
 
 pio.templates.default = "plotly_white"
-pio.kaleido.scope.mathjax = None
+pio.defaults.mathjax = None
 
 
 def subplot_hard_margin(fig, idx, subplot, step_x=3, step_y=3, sigma=2.,

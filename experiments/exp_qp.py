@@ -8,7 +8,7 @@ from index.optimization import kernel_nnls, kernel_nnls_l0
 from plot_utils import write_image
 
 pio.templates.default = "plotly_white"
-pio.kaleido.scope.mathjax = None
+pio.defaults.mathjax = None
 
 
 def svg_cartoon_no_max_degree():
