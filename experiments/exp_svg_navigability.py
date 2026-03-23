@@ -85,7 +85,7 @@ def main():
 
     cols = len(configs) // 2
     fig = make_subplots(rows=2, cols=cols,
-                        subplot_titles=[f'{config['dims']} dimensions'
+                        subplot_titles=[f"{config['dims']} dimensions"
                                         for config in configs],
                         # shared_yaxes=True,
                         vertical_spacing=0.4)
