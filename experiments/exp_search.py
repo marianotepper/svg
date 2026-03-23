@@ -9,7 +9,7 @@ from plot_utils import plot_graph, plot_lunes
 
 if __name__ == '__main__':
     pio.templates.default = "plotly_white"
-    pio.kaleido.scope.mathjax = None
+    plotly.io.defaults.mathjax = None
 
     rng = np.random.default_rng(10)
 
