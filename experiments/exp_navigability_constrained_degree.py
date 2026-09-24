@@ -15,10 +15,11 @@ def main():
     pio.templates.default = "plotly_white"
 
     configs = [
-        dict(dims=5, sigma=0.5, max_out_degree=5),
-        dict(dims=10, sigma=0.8, max_out_degree=7),
-        dict(dims=20, sigma=1.3, max_out_degree=8),
-        dict(dims=50, sigma=1.9, max_out_degree=16),
+        dict(dims=5, sigma=0.6, max_out_degree=6),
+        dict(dims=10, sigma=0.9, max_out_degree=9),
+        dict(dims=20, sigma=1.3, max_out_degree=12),
+        dict(dims=50, sigma=2.0, max_out_degree=16),
+        dict(dims=100, sigma=3.3, max_out_degree=20),
     ]
 
     # sigmas = np.arange(0.1, 1.7, step=0.1, dtype=float)
@@ -55,11 +56,6 @@ def main():
                     SVG(Kernel(sigma=sigma, similarity='euclidean'),
                         max_out_degree=max_out_degree)
                 ]
-                # indices.extend([
-                #     SVG(Kernel(sigma=sigma, similarity='euclidean'),
-                #         max_out_degree=max_out_degree)
-                #     for sigma in sigmas
-                # ])
 
                 for index in indices:
                     tic = timeit.default_timer()
@@ -76,7 +72,7 @@ def main():
                         n_searches = 0
                         matches = 0
 
-                        for entrypoint in range(0, len(X), 10):
+                        for entrypoint in range(0, len(X), 100):
                             for i, query in enumerate(X):
                                 if i== entrypoint:
                                     continue

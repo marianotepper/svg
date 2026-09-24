@@ -2,24 +2,25 @@ from heapq import nlargest
 from multiprocessing import Pool
 import networkx as nx
 import numpy as np
-import timeit
-from typing import Optional
+from typing import Optional, Union
 
 from index.search import SearchGraph
 from index.optimization import kernel_nnls, kernel_nnls_l0
-from index.kernels import Kernel
+from index.kernels import Kernel, KernelMatrix
 
 
 class SVG(SearchGraph):
     def __init__(self, kernel: Kernel,
                  max_out_degree: Optional[int] = None,
-                 outer_l0_iterations: Optional[int] = None):
+                 outer_l0_iterations: Optional[int] = None,
+                 build_full_kernel: bool = True):
         if max_out_degree is None and outer_l0_iterations is not None:
             raise ValueError('max_out_degree must be specified if outer_l0_iterations is specified')
 
         super().__init__(max_out_degree)
         self.kernel = kernel
         self.outer_l0_iterations = outer_l0_iterations
+        self.build_full_kernel = build_full_kernel
         self.stats_s_sum = None
 
     def name(self):
@@ -35,7 +36,10 @@ class SVG(SearchGraph):
         self.graph = nx.DiGraph()
         self.graph.add_nodes_from(range(len(X)))
 
-        K = self.kernel.build_kernel(X)
+        if self.max_out_degree is None:
+            K = self.kernel.build_kernel(X)
+        else:
+            K = self.kernel.build_kernel_matrix(X, self.build_full_kernel)
 
         with Pool() as p:
             all_neighbors = p.map(
@@ -79,7 +83,7 @@ class NeighborhoodBuilder:
                                   return_edges=True)
 
 
-def build_neighborhood(K: np.ndarray, idx: int,
+def build_neighborhood(K: Union[np.ndarray, KernelMatrix], idx: int,
                        max_out_degree: Optional[int] = None,
                        outer_l0_iterations: Optional[int] = None,
                        return_edges: bool = False) -> tuple[list[int], np.ndarray]:

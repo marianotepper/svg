@@ -1,7 +1,9 @@
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 from scipy.optimize import minimize
+
+from .kernels import KernelMatrix
 
 
 def kernel_nnls(K: np.ndarray, zero_dim: int, solver='multiplicative'):
@@ -30,7 +32,7 @@ def kernel_nnls(K: np.ndarray, zero_dim: int, solver='multiplicative'):
     if solver == 'scipy':
         x_temp = qp(A, b)
     elif solver == 'multiplicative':
-        x_temp = qp_multiplicative(A, b)
+        x_temp = qp_fista(A, b, budget=1.0 / n)
 
     x = np.zeros((n,))
     x[idx] = x_temp
@@ -62,39 +64,54 @@ def qp(A: np.ndarray, b: np.ndarray):
     return res.x
 
 
-def qp_multiplicative(A: np.ndarray, b: np.ndarray, n_iterations: int = 1_000,
-                      relative_tol: float = 1e-6):
-    """
-    Solves the convex problem:
-        min_{x} 0.5 x.T @ A @ x - b.T @ x
-    subject to x >= 0.
+def _proj_ball_orthant(y, r):
+    """Exact Euclidean projection onto {x >= 0, ||x|| <= r}: clip, then scale."""
+    z = np.maximum(y, 0.0)
+    nz = np.linalg.norm(z)
+    return z if nz <= r else z * (r / nz)
 
-    :param A: square ndarray representing a positive definite matrix with
-              nonnegative entries
-    :param b: one-dimensional ndarray
-    :param n_iterations: maximum number of multiplicative updates
-    :param relative_tol: relative tolerance for convergence
-    :return: the solution x
+
+def _top_eig(A, iters=64):
+    """Largest eigenvalue of the symmetric PSD matrix A via power iteration,
+    with a 1% safety margin so it upper-bounds lambda_max (valid FISTA step)."""
+    n = len(A)
+    v = np.ones(n) / np.sqrt(n)
+    lam = 0.0
+    for _ in range(iters):
+        w = A @ v
+        nw = np.linalg.norm(w)
+        if nw == 0:
+            return 1.0
+        v = w / nw
+        lam = v @ (A @ v)
+    return lam * 1.01 + 1e-12
+
+
+def qp_fista(A, b, budget=None, iters=5000, tol=1e-12):
+    """min_x 0.5 x^T A x - b^T x  s.t. x >= 0, ||x||^2 <= budget.
+
+    Accelerated projected gradient. `budget` defaults to 1/len(A) to match
+    optimization.qp_multiplicative's semantics; pass budget=1.0/N explicitly to
+    use the manuscript's 1/N with N = total number of points (recommended for
+    consistency inside kernel_nnls_l0, which otherwise uses 1/|candidates|).
     """
     n = len(A)
-    x = np.ones(n) / n
-    for it in range(n_iterations):
-        gamma = b / (A @ x)
-        x_new = x * gamma
-
-        factor = n * (x_new ** 2).sum()
-        if factor > 1:
-            x_new /= factor ** 0.5
-
-        if np.linalg.norm(x_new - x) / np.linalg.norm(x) < relative_tol:
-            return x_new
-        else:
-            x = x_new
-
+    r = np.sqrt((1.0 / n) if budget is None else float(budget))
+    L = _top_eig(A)                        # Lipschitz constant of the gradient
+    x = _proj_ball_orthant(b.copy(), r)    # warm start
+    y = x.copy()
+    t = 1.0
+    for _ in range(iters):
+        xn = _proj_ball_orthant(y - (A @ y - b) / L, r)
+        tn = 0.5 * (1.0 + np.sqrt(1.0 + 4.0 * t * t))
+        y = xn + ((t - 1.0) / tn) * (xn - x)
+        if np.linalg.norm(xn - x) / (np.linalg.norm(x) + 1e-30) < tol:
+            x = xn
+            break
+        x, t = xn, tn
     return x
 
-
-def kernel_nnls_l0(K: np.ndarray, zero_dim: int, nonzeros: int,
+def kernel_nnls_l0(K: Union[np.ndarray, KernelMatrix], zero_dim: int, nonzeros: int,
                    outer_l0_iterations: Optional[int] = None):
     """
     Solves the convex problem:
@@ -120,7 +137,7 @@ def kernel_nnls_l0(K: np.ndarray, zero_dim: int, nonzeros: int,
 
     n = len(K)
     candidates_old = []
-    y = K[zero_dim]
+    y = K.get_submatrix(zero_dim)
 
     error_y = np.inf
 
@@ -139,15 +156,20 @@ def kernel_nnls_l0(K: np.ndarray, zero_dim: int, nonzeros: int,
 
         idx_temp = list(candidates)
         idx_temp.append(zero_dim)
-        x_prime = qp_multiplicative(K[candidates, :][:, candidates],
-                                    K[zero_dim, :][candidates])
+        x_prime = qp_fista(K.get_submatrix(candidates, candidates),
+                           K.get_submatrix(zero_dim, candidates),
+                           budget=1.0 / n)
         x_prime[x_prime < x_prime.max() * 1e-4] = 0
 
         keep_n_entries = np.minimum(nonzeros, np.count_nonzero(x_prime))
         idx = np.argsort(x_prime)[-keep_n_entries:]
         candidates = [candidates[i] for i in idx]
         x_prime = x_prime[idx]
-        y_new = K[zero_dim] - x_prime.T @ K[candidates]
+
+        K_candidates = K.get_submatrix(candidates)
+        if len(K_candidates.shape) == 1:
+            K_candidates = K_candidates[:, np.newaxis]
+        y_new = K.get_submatrix(zero_dim) - K_candidates @ x_prime
         error_y_new = np.linalg.norm(y_new - y)
 
         if sorted(candidates) == sorted(candidates_old) and np.abs(error_y - error_y_new) < 1e-6:

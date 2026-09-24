@@ -12,7 +12,7 @@ pio.templates.default = "plotly_white"
 pio.defaults.mathjax = None
 
 
-def subplot_hard_margin(fig, idx, subplot, step_x=3, step_y=3, sigma=2.,
+def subplot_hard_margin(fig, idx, subplot, step_x=3, step_y=3, sigma=1.0,
                      colorbar_x_pos=0.5, n_grid=300):
     if not (0 <= idx < step_x * step_y):
         raise ValueError("idx out of range")
@@ -31,7 +31,7 @@ def subplot_hard_margin(fig, idx, subplot, step_x=3, step_y=3, sigma=2.,
     K = kernel.build_kernel(X)
 
     s = kernel_nnls(K, zero_dim=idx)
-    s[s < 1e-4] = 0
+    s[s < s.max() * 1e-4] = 0
     print(s, s.sum())
 
     mesh_eval = np.meshgrid(coord_eval[0], coord_eval[1])
@@ -147,9 +147,9 @@ def plot_hard_margin():
     fig = plotly.subplots.make_subplots(rows=rows, cols=cols,
                                         shared_xaxes=True,
                                         shared_yaxes=True)
-    subplot_hard_margin(fig, 0, (1, 1), sigma=2.5, colorbar_x_pos=0.15)
-    subplot_hard_margin(fig, 1, (1, 2), sigma=2.5, colorbar_x_pos=0.5)
-    subplot_hard_margin(fig, 4, (1, 3), sigma=2.5, colorbar_x_pos=0.85)
+    subplot_hard_margin(fig, 0, (1, 1), sigma=0.8, colorbar_x_pos=0.15)
+    subplot_hard_margin(fig, 1, (1, 2), sigma=0.8, colorbar_x_pos=0.5)
+    subplot_hard_margin(fig, 4, (1, 3), sigma=0.8, colorbar_x_pos=0.85)
 
     fig.update_layout(
         height=500,

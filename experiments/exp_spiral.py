@@ -24,7 +24,7 @@ def generate_spiral(n_points, n_turns):
         - y: y-coordinates of the spiral points.
     """
     theta = np.linspace(0, n_turns * 2 * np.pi, n_points)
-    r = np.linspace(1, 2, n_points)
+    r = np.linspace(1, 1.25, n_points)
     x = r * np.cos(theta)
     y = r * np.sin(theta)
     return np.stack((x, y)).T
@@ -56,7 +56,7 @@ def main():
     X = np.vstack((np.zeros((1, 2)), X))
     idx = 0
 
-    kernel = Kernel(1.5)
+    kernel = Kernel(0.9)
 
     mrng_neighbors = build_neighborhood_mrng(X, idx)
     mrng_edge_traces = generate_edge_traces(X, idx, mrng_neighbors,
@@ -67,13 +67,13 @@ def main():
                                                   1, 7, 'dot')
 
     K = kernel.build_kernel(X)
-
     s = kernel_nnls(K, zero_dim=idx, solver='multiplicative')
     s[s < s.max() * 1e-3] = 0
     svg_neighbors = [i for i in np.argsort(s)[::-1] if s[i] > 0]
     svg_edge_traces = generate_edge_traces(X, 0, svg_neighbors, 'SVG',
                                            '#b2df8a', 1, 7, 'solid')
 
+    K = kernel.build_kernel_matrix(X, True)
     s = kernel_nnls_l0(K, zero_dim=idx, nonzeros=3)
     svg_neighbors = [i for i in np.argsort(s)[::-1] if s[i] > 0]
     svg_trunc_edge_traces = generate_edge_traces(X, 0, svg_neighbors,

@@ -5,7 +5,6 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import plotly.io as pio
 import timeit
 
 from index import SVG, Kernel
@@ -13,8 +12,6 @@ from plot_utils import write_image
 
 
 def main():
-    pio.templates.default = "plotly_white"
-
     configs = [
         dict(dims=2, sigmas=[0.2, 0.3, 0.4, 0.5, 0.6]),
         dict(dims=5, sigmas=[0.4, 0.5, 0.6, 0.7, 0.8]),
@@ -54,7 +51,7 @@ def main():
                     n_searches = 0
                     matches = 0
 
-                    for entrypoint in range(len(X)):
+                    for entrypoint in range(0, len(X), 10):
                         for i, query in enumerate(X):
                             if i== entrypoint:
                                 continue
@@ -122,6 +119,7 @@ def main():
 
     fig.update_annotations(font_size=25)
     fig.update_layout(
+        template='plotly_white',
         height=400,
         width=1600,
         font=dict(size=25),

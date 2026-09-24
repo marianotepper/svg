@@ -13,7 +13,7 @@ pio.defaults.mathjax = None
 
 def svg_cartoon_no_max_degree():
     idx = 12
-    sigma = 3
+    sigma = 0.7
     print(sigma)
 
     coord0 = np.array([0, 1, 2, 12, 13, 14])
@@ -28,7 +28,6 @@ def svg_cartoon_no_max_degree():
 
     s = kernel_nnls(K, zero_dim=idx)
     print(s, s.sum())
-    s[s < 1e-9] = 0
     s /= s.sum()
 
     # print(s, s.sum())
