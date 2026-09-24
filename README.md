@@ -6,8 +6,8 @@ Provides a reference implementation of the Support Vector Graph (SVG)
 >
 > The kernel of graph indices for vector search 
 >
-> 2025
-> 
+> TMLR, 2026
+> https://openreview.net/forum?id=28LzHsSjef
 > https://arxiv.org/abs/2506.20584
 
-It also allows to reproduce all plots in the paper. 
+It allows to reproduce all plots in the paper. 
