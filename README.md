@@ -8,7 +8,7 @@ Provides a reference implementation of the Support Vector Graph (SVG)
 >
 > TMLR, 2026
 > 
-> https://openreview.net/forum?id=28LzHsSjef
+> https://openreview.net/forum?id=j38uTbApaW
 > 
 > https://arxiv.org/abs/2506.20584
 
